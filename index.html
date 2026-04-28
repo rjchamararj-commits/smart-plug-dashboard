@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Plug Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: inline-block; width: 300px; margin: 10px; }
+        h1 { color: #333; }
+        .reading { font-size: 24px; font-weight: bold; color: #007bff; }
+        .btn { padding: 15px 30px; font-size: 18px; cursor: pointer; border: none; border-radius: 50px; color: white; transition: 0.3s; margin-top: 20px; }
+        .on { background-color: #28a745; }
+        .off { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+
+    <h1>Smart Plug Control Panel</h1>
+
+    <div class="card">
+        <p>Voltage</p>
+        <div id="volt" class="reading">0 V</div>
+    </div>
+
+    <div class="card">
+        <p>Current</p>
+        <div id="curr" class="reading">0 A</div>
+    </div>
+
+    <div class="card">
+        <p>Power</p>
+        <div id="pwr" class="reading">0 W</div>
+    </div>
+
+    <br>
+
+    <div class="card">
+        <p>Relay Control</p>
+        <button id="relayBtn" class="btn off" onclick="toggleRelay()">Turn ON</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // --- 1. REPLACE WITH YOUR FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBH5zx6hu4gkkm1DUgIRDhTZotzyrNi0Ks",
+            authDomain: "smart-plug-base.firebaseapp.com",
+            databaseURL: "https://smart-plug-base-default-rtdb.firebaseio.com",
+            projectId: "smart-plug-base",
+            storageBucket: "smart-plug-base.firebasestorage.app",
+            messagingSenderId: "526273264686",
+            appId: "1:526273264686:web:e554b79c5f70be29dd33bf"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let currentRelayState = false;
+
+        // --- 2. LISTEN FOR READINGS ---
+        db.ref('Readings').on('value', (snapshot) => {
+            const data = snapshot.val();
+            document.getElementById('volt').innerText = data.Voltage.toFixed(1) + " V";
+            document.getElementById('curr').innerText = data.Current.toFixed(3) + " A";
+            document.getElementById('pwr').innerText = data.Power.toFixed(1) + " W";
+        });
+
+        // --- 3. LISTEN FOR RELAY STATE ---
+        db.ref('Controls/Relay').on('value', (snapshot) => {
+            currentRelayState = snapshot.val();
+            const btn = document.getElementById('relayBtn');
+            if (currentRelayState) {
+                btn.innerText = "Turn OFF";
+                btn.className = "btn off";
+            } else {
+                btn.innerText = "Turn ON";
+                btn.className = "btn on";
+            }
+        });
+
+        // --- 4. TOGGLE FUNCTION ---
+        function toggleRelay() {
+            db.ref('Controls/Relay').set(!currentRelayState);
+        }
+    </script>
+</body>
+</html>
